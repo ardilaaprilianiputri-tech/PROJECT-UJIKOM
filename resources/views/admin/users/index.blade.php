@@ -8,7 +8,7 @@
     <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
         <h3 class="text-lg font-bold text-gray-800">Daftar Pengguna Sistem</h3>
 
-        <form action="{{ route('admin.user.index') }}" method="GET" class="flex items-center gap-2 w-full md:w-auto">
+        <form action="{{ route('admin.users.index') }}" method="GET" class="flex items-center gap-2 w-full md:w-auto">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau email..." 
                 class="w-full md:w-56 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500">
 
@@ -24,11 +24,11 @@
             </button>
 
             @if(request('search') || request('role'))
-                <a href="{{ route('admin.user.index') }}" class="text-sm text-gray-600 hover:underline whitespace-nowrap ml-1">Reset</a>
+                <a href="{{ route('admin.users.index') }}" class="text-sm text-gray-600 hover:underline whitespace-nowrap ml-1">Reset</a>
             @endif
         </form>
 
-        <a href="{{ route('admin.user.create') }}" 
+        <a href="{{ route('admin.users.create') }}" 
            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition whitespace-nowrap">
             + Tambah User
         </a>
@@ -75,12 +75,12 @@
                         <td class="py-3 px-4">{{ $user->no_hp ?? '-' }}</td>
                         <td class="py-3 px-4 text-center">
                             <div class="flex items-center justify-center space-x-2">
-                                <a href="{{ route('admin.user.edit', $user->id) }}" 
+                                <a href="{{ route('admin.users.edit', $user->id) }}" 
                                    class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-xs font-semibold transition">
                                     Edit
                                 </a>
 
-                                <form action="{{ route('admin.user.destroy', $user->id) }}" method="POST" 
+                                <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" 
                                       onsubmit="return confirm('Yakin ingin menghapus user ini?')">
                                     @csrf
                                     @method('DELETE')

@@ -11,11 +11,21 @@ use Illuminate\Support\Facades\DB;
 
 class PetugasController extends Controller
 {
-    // Menampilkan daftar pengajuan peminjaman dari siswa/peminjam
-    public function indexPeminjaman()
+    // Menampilkan daftar pengajuan peminjaman dari siswa/peminjam dengan fitur pencarian
+    public function indexPeminjaman(Request $request)
     {
-        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat'])->latest()->get();
-        return view('petugas.peminjaman.index', compact('peminjamans'));
+        $search = $request->input('search');
+        
+        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat'])
+            ->when($search, function ($query, $search) {
+                return $query->whereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->get();
+            
+        return view('petugas.peminjaman.index', compact('peminjamans', 'search'));
     }
 
     public function setujuiPeminjaman($id)

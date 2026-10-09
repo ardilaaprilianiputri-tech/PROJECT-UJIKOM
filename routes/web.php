@@ -4,12 +4,14 @@ use Illuminate\Support\Facades\Route;
 
 // Import Controller
 use App\Http\Controllers\API\AdminController;
-use App\Http\Controllers\API\PetugasController;
+use App\Http\Controllers\API\PetugasController as ApiPetugasController;
+use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\API\PeminjamController;
 use App\Http\Controllers\API\AuthController;
 
 // Import Middleware
 use App\Http\Middleware\IsAdmin;
+use App\Http\Middleware\IsPetugas;
 use App\Http\Middleware\IsPeminjam;
 
 // Halaman Utama
@@ -21,7 +23,7 @@ Route::get('/', function () {
 Route::middleware(['auth', IsAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
 
-    // CRUD Alat (LENGKAP)
+    // CRUD Alat
     Route::get('/alat', [AdminController::class, 'indexAlat'])->name('alat.index');
     Route::get('/alat/create', [AdminController::class, 'createAlat'])->name('alat.create');
     Route::post('/alat', [AdminController::class, 'storeAlat'])->name('alat.store');
@@ -29,7 +31,7 @@ Route::middleware(['auth', IsAdmin::class])->prefix('admin')->name('admin.')->gr
     Route::put('/alat/{id}', [AdminController::class, 'updateAlat'])->name('alat.update');
     Route::delete('/alat/{id}', [AdminController::class, 'destroyAlat'])->name('alat.destroy');
 
-    // CRUD Kategori (LENGKAP)
+    // CRUD Kategori
     Route::get('/kategori', [AdminController::class, 'indexKategori'])->name('kategori.index');
     Route::get('/kategori/create', [AdminController::class, 'createKategori'])->name('kategori.create');
     Route::post('/kategori', [AdminController::class, 'storeKategori'])->name('kategori.store');
@@ -37,13 +39,13 @@ Route::middleware(['auth', IsAdmin::class])->prefix('admin')->name('admin.')->gr
     Route::put('/kategori/{id}', [AdminController::class, 'updateKategori'])->name('kategori.update');
     Route::delete('/kategori/{id}', [AdminController::class, 'destroyKategori'])->name('kategori.destroy');
 
-    // CRUD User
-    Route::get('/users', [AdminController::class, 'indexUser'])->name('user.index');
-    Route::get('/users/create', [AdminController::class, 'createUser'])->name('user.create');
-    Route::post('/users', [AdminController::class, 'storeUser'])->name('user.store');
-    Route::get('/users/{id}/edit', [AdminController::class, 'editUser'])->name('user.edit');
-    Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('user.update');
-    Route::delete('/users/{id}', [AdminController::class, 'destroyUser'])->name('user.destroy');
+    // CRUD User (Diperbarui menggunakan 'users' dengan huruf 's')
+    Route::get('/users', [AdminController::class, 'indexUser'])->name('users.index');
+    Route::get('/users/create', [AdminController::class, 'createUser'])->name('users.create');
+    Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
+    Route::get('/users/{id}/edit', [AdminController::class, 'editUser'])->name('users.edit');
+    Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('users.update');
+    Route::delete('/users/{id}', [AdminController::class, 'destroyUser'])->name('users.destroy');
 
     // CRUD Peminjaman
     Route::get('/peminjaman', [AdminController::class, 'indexPeminjaman'])->name('peminjaman.index');
@@ -52,15 +54,24 @@ Route::middleware(['auth', IsAdmin::class])->prefix('admin')->name('admin.')->gr
     Route::put('/peminjaman/{id}/status', [AdminController::class, 'updateStatusPeminjaman'])->name('peminjaman.updateStatus');
     Route::delete('/peminjaman/{id}', [AdminController::class, 'destroyPeminjaman'])->name('peminjaman.destroy');
 
-    // CRUD Pengembalian (BARU)
+    // CRUD Pengembalian
     Route::get('/pengembalian', [AdminController::class, 'indexPengembalian'])->name('pengembalian.index');
     Route::delete('/pengembalian/{id}', [AdminController::class, 'destroyPengembalian'])->name('pengembalian.destroy');
 });
 
 // Petugas
-Route::middleware(['auth', 'role:petugas,admin'])->prefix('petugas')->name('petugas.')->group(function () {
+Route::middleware(['auth', IsPetugas::class])->prefix('petugas')->name('petugas.')->group(function () {
+    // Fitur Peminjaman & Persetujuan
     Route::get('/peminjaman', [PetugasController::class, 'indexPeminjaman'])->name('peminjaman.index');
     Route::post('/peminjaman/{id}/setujui', [PetugasController::class, 'setujuiPeminjaman'])->name('peminjaman.setujui');
+    Route::post('/peminjaman/{id}/tolak', [PetugasController::class, 'tolakPeminjaman'])->name('peminjaman.tolak');
+    
+    // Fitur Laporan
+    Route::get('/laporan', [PetugasController::class, 'laporan'])->name('laporan.index');
+    Route::get('/laporan/cetak', [PetugasController::class, 'cetakLaporan'])->name('laporan.cetak');
+    
+    // Fitur Pengembalian
+    Route::get('/pengembalian', [PetugasController::class, 'indexPengembalian'])->name('pengembalian.index');
     Route::post('/pengembalian/{id}', [PetugasController::class, 'prosesPengembalian'])->name('pengembalian.proses');
 });
 

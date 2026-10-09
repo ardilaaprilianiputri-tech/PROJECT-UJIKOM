@@ -26,7 +26,6 @@ class Peminjaman extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Ubah dari detailPinjam menjadi detailPinjams (tambah huruf 's')
     public function detailPinjams(): HasMany {
         return $this->hasMany(DetailPinjam::class);
     }

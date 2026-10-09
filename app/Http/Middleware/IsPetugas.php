@@ -10,7 +10,8 @@ class IsPetugas
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && $request->user()->role === 'petugas') {
+        // Izinkan jika role user adalah 'petugas' ATAU 'admin'
+        if ($request->user() && in_array($request->user()->role, ['petugas', 'admin'])) {
             return $next($request);
         }
 

@@ -13,4 +13,10 @@ class Kategori extends Model
     protected $table = 'kategori'; 
 
     protected $guarded = [];
+
+    // Tambahkan relasi ini agar method alats() terbaca di AdminController
+    public function alats()
+    {
+        return $this->hasMany(Alat::class, 'kategori_id');
+    }
 }

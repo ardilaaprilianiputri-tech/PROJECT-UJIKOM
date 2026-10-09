@@ -88,7 +88,7 @@ class AdminController extends Controller
 
         $request->validate([
             'nama_alat'      => 'required|string|max:255',
-            'kategori_id'    => 'required|exists:kategoris,id',
+            'kategori_id'    => 'required|exists:kategori,id',
             'stok'           => 'required|integer|min:0',
             'status_kondisi' => 'required|string|max:100',
             'deskripsi'      => 'nullable|string',
@@ -170,7 +170,7 @@ class AdminController extends Controller
         $kategori = Kategori::findOrFail($id);
 
         $request->validate([
-            'nama_kategori' => 'required|string|max:255|unique:kategoris,nama_kategori,' . $id,
+            'nama_kategori' => 'required|string|max:255|unique:kategori,nama_kategori,' . $id,
         ]);
 
         $kategori->update([
@@ -234,7 +234,7 @@ class AdminController extends Controller
             'no_hp'    => $request->no_hp,
         ]);
 
-        return redirect()->route('admin.user.index')->with('success', 'User berhasil ditambahkan.');
+        return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
     public function editUser($id)
@@ -267,15 +267,31 @@ class AdminController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('admin.user.index')->with('success', 'Data user berhasil diperbarui.');
+        return redirect()->route('admin.users.index')->with('success', 'Data user berhasil diperbarui.');
     }
 
     public function destroyUser($id)
     {
         $user = User::findOrFail($id);
-        $user->delete();
 
-        return redirect()->route('admin.user.index')->with('success', 'User berhasil dihapus.');
+        DB::beginTransaction();
+        try {
+            $peminjamans = Peminjaman::where('user_id', $id)->get();
+
+            foreach ($peminjamans as $peminjaman) {
+                DB::table('pengembalian')->where('peminjaman_id', $peminjaman->id)->delete();
+                $peminjaman->detailPinjams()->delete();
+                $peminjaman->delete();
+            }
+
+            $user->delete();
+
+            DB::commit();
+            return redirect()->route('admin.users.index')->with('success', 'User dan seluruh data terkait berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus user: ' . $e->getMessage());
+        }
     }
 
     // --- PENGELOLAAN PEMINJAMAN ---
@@ -389,18 +405,27 @@ class AdminController extends Controller
     {
         $peminjaman = Peminjaman::with('detailPinjams')->findOrFail($id);
 
-        if ($peminjaman->status == 'dipinjam') {
-            foreach ($peminjaman->detailPinjams as $detail) {
-                $detail->alat->increment('stok', $detail->jumlah);
+        DB::beginTransaction();
+        try {
+            if ($peminjaman->status == 'dipinjam') {
+                foreach ($peminjaman->detailPinjams as $detail) {
+                    $detail->alat->increment('stok', $detail->jumlah);
+                }
             }
+
+            DB::table('pengembalian')->where('peminjaman_id', $id)->delete();
+            $peminjaman->detailPinjams()->delete();
+            $peminjaman->delete();
+
+            DB::commit();
+            return redirect()->route('admin.peminjaman.index')->with('success', 'Data peminjaman berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
         }
-
-        $peminjaman->delete();
-
-        return redirect()->route('admin.peminjaman.index')->with('success', 'Data peminjaman berhasil dihapus.');
     }
 
-    // --- PENGELOLAAN PENGEMBALIAN (BARU) ---
+    // --- PENGELOLAAN PENGEMBALIAN ---
     public function indexPengembalian(Request $request)
     {
         $search = $request->input('search');
@@ -421,9 +446,21 @@ class AdminController extends Controller
 
     public function destroyPengembalian($id)
     {
-        $pengembalian = Peminjaman::findOrFail($id);
-        $pengembalian->delete();
+        $pengembalian = Peminjaman::with('detailPinjams')->findOrFail($id);
+        
+        DB::beginTransaction();
+        try {
+            
+            DB::table('pengembalian')->where('peminjaman_id', $id)->delete();
 
-        return redirect()->route('admin.pengembalian.index')->with('success', 'Data pengembalian berhasil dihapus.');
+            $pengembalian->detailPinjams()->delete();
+            $pengembalian->delete();
+
+            DB::commit();
+            return redirect()->route('admin.pengembalian.index')->with('success', 'Data pengembalian berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
+        }
     }
 }
